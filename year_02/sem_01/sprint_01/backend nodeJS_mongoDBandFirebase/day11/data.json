@@ -1,0 +1,22 @@
+{
+  "students": [
+    {
+      "id": 1,
+      "name": "Sushant",
+      "age": 19,
+      "department": "CSE"
+    },
+    {
+      "id": 2,
+      "name": "Ramjeee",
+      "age": 20,
+      "department": "IT"
+    },
+    {
+      "id": 3,
+      "name": "Parth",
+      "age": 19,
+      "department": "CSE"
+    }
+  ]
+}
