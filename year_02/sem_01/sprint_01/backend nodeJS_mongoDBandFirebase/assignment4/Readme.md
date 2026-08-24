@@ -75,7 +75,7 @@ Technology: Node.js
 Experience: 1 Year
 City: Kolkata
 
-File renamed successfully
+
 Do you want to change file name of students.txt to studentDetails.txt? (yes/no):
 ```
 
@@ -86,12 +86,10 @@ Do you want to change file name of students.txt to studentDetails.txt? (yes/no):
 File renamed successfully
 ```
 
-The file `studentDetails.txt` is permanently deleted.
-
 ### If the user enters `no`
 
 ```text
-Do you want to delete studentDetails.txt? (yes/no): no
+Do you want to change file name of students.txt to studentDetails.txt? (yes/no): no
 File name was not changed.
 ```
 
