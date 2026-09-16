@@ -135,16 +135,6 @@ Name: John
 Course: FullStack
 ```
 
-## Route Parameters vs. Query Parameters
-
-| | Route Parameters | Query Parameters |
-|---|---|---|
-| Location in URL | Path segment (e.g. `/student/101`) | After `?` (e.g. `?name=John`) |
-| Syntax in route definition | `:paramName` | Not declared in the route path |
-| Accessed via | `req.params` | `req.query` |
-| Required or optional | Typically required — the route won't match without it | Typically optional |
-| Best suited for | Identifying a specific resource (e.g. an ID) | Filtering, searching, or passing optional extra data |
-| Used in this project | `route_p.js`, `student_p.js` | `query_p.js`, `student_p.js` |
 
 ## How the Application Works
 
@@ -245,11 +235,4 @@ By completing this assignment, the following outcomes were achieved:
 - Understanding of when to use a route parameter versus a query parameter based on whether the data is required to identify a resource or is optional/filtering data.
 - Ability to combine both parameter types in a single route to model a more realistic API endpoint.
 
-
-## Key Takeaways
-
-- Route parameters are best suited for identifying a specific, required resource.
-- Query parameters are best suited for optional, filtering, or supplementary data.
-- A single Express route can use both mechanisms together without conflict.
-- Always account for the possibility that optional query parameters may be absent.
 
