@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebSocket Chat</title>
+</head>
+<body>
+<script>
+const socket = new WebSocket("ws://localhost:4000");
+
+socket.onopen = () => {
+  console.log("Connected to server");
+  socket.send("Hi");
+  socket.send("Hello server");
+  socket.send("Send me an update");
+  socket.send("Bye");
+};
+
+socket.onmessage = (event) => {
+  console.log("Message from server:", event.data);
+};
+</script>
+</body>
+</html>
