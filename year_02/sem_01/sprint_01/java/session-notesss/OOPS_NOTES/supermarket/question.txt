@@ -1,0 +1,5 @@
+one supermarket needs different billing methods for their products....
+if customers buy one item, calc the bill using price of the item
+if the customer buys multiple quantities of one item, calculate price x quantity
+if the customer buys multiple items, calc the price x quantity + tax
+

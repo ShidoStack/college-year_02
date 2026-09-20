@@ -1,0 +1,4 @@
+create a parent class named Employee which contains name salary display
+a derived child class named Manager which contains department displayManager
+
+two types of vehicle car and bike

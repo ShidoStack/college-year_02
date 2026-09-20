@@ -1,0 +1,3 @@
+Polymorphism:-
+one name many forms, one function different output
+
