@@ -1,0 +1,13 @@
+{
+  "name": "assignment11.0",
+  "version": "1.0.0",
+  "description": "assignment11.0 # Assignment 11 – Teacher and Student Registration Using Express.js and MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
