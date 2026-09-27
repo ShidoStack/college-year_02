@@ -1,0 +1,8 @@
+{
+  "totalVisits": 7,
+  "routes": {
+    "/home": 3,
+    "/about": 2,
+    "/contact": 2
+  }
+}
