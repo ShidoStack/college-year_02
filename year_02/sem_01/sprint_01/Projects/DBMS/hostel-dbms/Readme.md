@@ -148,7 +148,7 @@ The table contains validation constraints for gender and year of study.
 
 ---
 
-6.4 `room_allocations`
+## 6.4 `room_allocations`
 
 Stores room-allocation history.
 
@@ -166,95 +166,114 @@ An active allocation is represented by:
 
 ```sql
 vacated_on IS NULL
+```
 
 This allows the database to preserve historical allocations while identifying the student's current room.
 
 A partial unique index ensures that a student cannot have more than one active room allocation.
 
-6.5 meal_types
+---
+
+## 6.5 `meal_types`
 
 Stores the available meal types.
 
 Examples include:
 
-Breakfast
-Lunch
-Dinner
+- Breakfast
+- Lunch
+- Dinner
 
 Important columns:
 
-meal_type_id — Primary key
-meal_name — Unique meal name
-rate — Cost per meal
+- `meal_type_id` — Primary key
+- `meal_name` — Unique meal name
+- `rate` — Cost per meal
 
 Keeping meal types in a separate table avoids hardcoding meal types into the attendance and billing tables.
 
-6.6 mess_attendance
+---
+
+## 6.6 `mess_attendance`
 
 Stores daily meal attendance.
 
 Important columns:
 
-attendance_id — Primary key
-student_id — References students
-meal_type_id — References meal_types
-attendance_date
-consumed
-recorded_at
+- `attendance_id` — Primary key
+- `student_id` — References `students`
+- `meal_type_id` — References `meal_types`
+- `attendance_date`
+- `consumed`
+- `recorded_at`
 
 The unique constraint:
 
+```sql
 (student_id, meal_type_id, attendance_date)
+```
 
 prevents duplicate attendance records for the same student, meal type, and date.
 
-6.7 mess_bills
+---
+
+## 6.7 `mess_bills`
 
 Stores monthly student mess bills.
 
 Important columns:
 
-bill_id — Primary key
-student_id — References students
-billing_month
-total_amount
-generated_at
-status
+- `bill_id` — Primary key
+- `student_id` — References `students`
+- `billing_month`
+- `total_amount`
+- `generated_at`
+- `status`
 
 The unique constraint:
 
+```sql
 (student_id, billing_month)
+```
 
 ensures that a student has at most one bill for a particular billing month.
 
 Allowed bill statuses are:
 
-Generated
-Paid
-Pending
-6.8 mess_bill_items
+- Generated
+- Paid
+- Pending
+
+---
+
+## 6.8 `mess_bill_items`
 
 Stores the meal-wise breakdown of a mess bill.
 
 Important columns:
 
-bill_item_id — Primary key
-bill_id — References mess_bills
-meal_type_id — References meal_types
-meals_consumed
-rate_per_meal
-amount
+- `bill_item_id` — Primary key
+- `bill_id` — References `mess_bills`
+- `meal_type_id` — References `meal_types`
+- `meals_consumed`
+- `rate_per_meal`
+- `amount`
 
 The unique constraint:
 
+```sql
 (bill_id, meal_type_id)
+```
 
 prevents duplicate meal-type entries within the same bill.
 
-7. Relationships
+---
+
+# 7. Relationships
 
 The major relationships are:
 
+```text
 blocks
    |
    | 1-to-many
@@ -292,203 +311,249 @@ mess_bill_items
    | many-to-1
    v
 meal_types
-8. Business Rules
+```
+
+---
+
+# 8. Business Rules
 
 The database implements the following important rules.
 
-Rule 1 — A room belongs to a block
+## Rule 1 — A room belongs to a block
 
 Every room must reference an existing hostel block.
 
-Rule 2 — Room numbers are unique within a block
+## Rule 2 — Room numbers are unique within a block
 
 The combination:
 
+```sql
 (block_id, room_number)
+```
 
 must be unique.
 
 This allows different blocks to contain rooms with the same room number.
 
-Rule 3 — A student can have only one active room allocation
+## Rule 3 — A student can have only one active room allocation
 
 An active allocation is identified by:
 
+```sql
 vacated_on IS NULL
+```
 
 The partial unique index:
 
+```sql
 CREATE UNIQUE INDEX uq_active_student_allocation
 ON room_allocations(student_id)
 WHERE vacated_on IS NULL;
+```
 
 prevents the same student from being assigned to multiple active rooms.
 
-Rule 4 — Historical allocations are retained
+## Rule 4 — Historical allocations are retained
 
 When a student vacates a room, the allocation record is not deleted.
 
 Instead:
 
+```text
 vacated_on
+```
 
 is populated.
 
 This preserves room-allocation history and allows the room to be re-allotted.
 
-Rule 5 — One attendance record per student, meal and date
+## Rule 5 — One attendance record per student, meal and date
 
 The following combination is unique:
 
+```text
 student_id
 meal_type_id
 attendance_date
+```
 
 This prevents duplicate attendance entries.
 
-Rule 6 — One bill per student per month
+## Rule 6 — One bill per student per month
 
 The following combination is unique:
 
+```text
 student_id
 billing_month
+```
 
 This prevents duplicate monthly bills.
 
-9. Seed Data
+---
+
+# 9. Seed Data
 
 The project uses a realistic dataset instead of only a few sample records.
 
 The seeded dataset contains approximately:
 
-Data	Quantity
-Hostel blocks	8
-Rooms	240
-Students	400
-Room allocations	400
-Meal types	3
-Mess attendance records	36,000
-Monthly mess bills	400
-Bill items	Approximately 1,200
+| Data | Quantity |
+|---|---|
+| Hostel blocks | 8 |
+| Rooms | 240 |
+| Students | 400 |
+| Room allocations | 400 |
+| Meal types | 3 |
+| Mess attendance records | 36,000 |
+| Monthly mess bills | 400 |
+| Bill items | Approximately 1,200 |
 
 Attendance data covers September 2026.
 
 The attendance dataset contains:
 
+```text
 400 students × 30 days × 3 meal types
 = 36,000 attendance records
+```
 
 The seed data also intentionally creates students who skipped more than 10 meals so that the corresponding business query produces meaningful results.
 
-10. Required Business Queries
+---
+
+# 10. Required Business Queries
 
 The project implements queries for the five required hostel-management questions.
 
-Query 1 — Vacant rooms in each block
+## Query 1 — Vacant rooms in each block
 
 The query counts rooms that do not currently have an active allocation.
 
 An active allocation is identified using:
 
+```sql
 vacated_on IS NULL
+```
 
-The query uses NOT EXISTS to determine whether a room has an active allocation.
+The query uses `NOT EXISTS` to determine whether a room has an active allocation.
 
-Query 2 — Each student's monthly mess bill
+## Query 2 — Each student's monthly mess bill
 
 The query joins:
 
+```text
 students
     |
     v
 mess_bills
+```
 
 and retrieves the September 2026 bill for every student.
 
-Query 3 — Students who skipped more than 10 meals
+## Query 3 — Students who skipped more than 10 meals
 
 The query filters attendance records where:
 
+```sql
 consumed = FALSE
+```
 
 and groups records by student.
 
-The HAVING clause is used to keep only students with more than 10 skipped meals:
+The `HAVING` clause is used to keep only students with more than 10 skipped meals:
 
+```sql
 HAVING COUNT(*) > 10
-Query 4 — Occupancy rate of each block
+```
+
+## Query 4 — Occupancy rate of each block
 
 Occupancy is calculated using:
 
+```text
 occupied beds / total bed capacity × 100
+```
 
 Only active room allocations are counted as occupied.
 
 The query uses:
 
-JOIN
-LEFT JOIN
-SUM
-COUNT
-GROUP BY
-ROUND
-Query 5 — Vacated rooms that have not been re-allotted
+- `JOIN`
+- `LEFT JOIN`
+- `SUM`
+- `COUNT`
+- `GROUP BY`
+- `ROUND`
+
+## Query 5 — Vacated rooms that have not been re-allotted
 
 The query identifies rooms with historical allocations where:
 
+```sql
 vacated_on IS NOT NULL
+```
 
 and no current allocation exists.
 
-A NOT EXISTS subquery is used to identify rooms that remain unallocated.
+A `NOT EXISTS` subquery is used to identify rooms that remain unallocated.
 
-11. Additional Queries
+---
+
+# 11. Additional Queries
 
 Additional queries were included to demonstrate SQL operations useful in the hostel-management system.
 
 These include:
 
-Current students and their room details
-Pending/generated bills
-Total September mess revenue
-Meal consumption summary
-Top 10 highest mess bills
+- Current students and their room details
+- Pending/generated bills
+- Total September mess revenue
+- Meal consumption summary
+- Top 10 highest mess bills
 
 These queries demonstrate joins, filtering, aggregation, ordering, and grouping.
 
-12. Index Design
+---
+
+# 12. Index Design
 
 Indexes were designed based on the expected access patterns of the database.
 
 The final explicit performance indexes are:
 
-Index	Column	Purpose
-idx_attendance_date	attendance_date	Attendance queries by date
-idx_attendance_meal_type_id	meal_type_id	Attendance filtering/joining by meal
-idx_allocations_room_id	room_id	Room allocation history
-idx_allocations_student_id	student_id	Student allocation history
-idx_bills_student_id	student_id	Student billing history
+| Index | Column | Purpose |
+|---|---|---|
+| `idx_attendance_date` | `attendance_date` | Attendance queries by date |
+| `idx_attendance_meal_type_id` | `meal_type_id` | Attendance filtering/joining by meal |
+| `idx_allocations_room_id` | `room_id` | Room allocation history |
+| `idx_allocations_student_id` | `student_id` | Student allocation history |
+| `idx_bills_student_id` | `student_id` | Student billing history |
 
 Primary-key and unique-constraint indexes are created automatically by PostgreSQL and are not recreated manually.
 
-13. EXPLAIN ANALYZE Experiments
+---
+
+# 13. EXPLAIN ANALYZE Experiments
 
 The project uses:
 
+```sql
 EXPLAIN (ANALYZE, BUFFERS)
+```
 
 to inspect:
 
-Execution plans
-Sequential scans
-Index scans
-Bitmap scans
-Buffer usage
-Actual execution time
+- Execution plans
+- Sequential scans
+- Index scans
+- Bitmap scans
+- Buffer usage
+- Actual execution time
 
 Five experiments were performed.
 
-Experiment 1 — Index that made a query slower
+## Experiment 1 — Index that made a query slower
 
 Query:
 
@@ -496,27 +561,39 @@ Students who skipped more than 10 meals.
 
 Test index:
 
+```sql
 CREATE INDEX idx_mess_attendance_date_consumed
 ON mess_attendance(attendance_date, consumed);
-Before
+```
+
+### Before
+
+```text
 Sequential Scan
 Execution Time: 4.463 ms
-After
+```
+
+### After
+
+```text
 Bitmap Index Scan
 Bitmap Heap Scan
 Execution Time: 5.695 ms
+```
 
 The index made the query slower.
 
-Explanation
+### Explanation
 
 The table contains only 36,000 attendance records, and the query still matched 3,100 rows.
 
 Using the index introduced additional work:
 
+```text
 Index lookup
      +
 Heap page access
+```
 
 For this dataset, PostgreSQL's original sequential scan was cheaper.
 
@@ -524,59 +601,83 @@ This demonstrates that adding an index does not guarantee better performance.
 
 The test index was removed from the final design.
 
-14. Experiment 2 — Index ignored because all rows matched
+---
+
+# 14. Experiment 2 — Index ignored because all rows matched
 
 A test index was created on:
 
+```text
 billing_month
+```
 
 for the monthly bill query.
 
-Before
+### Before
+
+```text
 Sequential Scan
 Execution Time: 1.571 ms
-After
+```
+
+### After
+
+```text
 Sequential Scan
 Execution Time: 0.793 ms
+```
 
 PostgreSQL continued to use a sequential scan.
 
-The query matched all 400 rows in mess_bills, so using an index would not provide a useful reduction in the amount of data that needed to be processed.
+The query matched all 400 rows in `mess_bills`, so using an index would not provide a useful reduction in the amount of data that needed to be processed.
 
 The lower measured execution time after index creation is not considered an index improvement because the execution plan remained a sequential scan.
 
 The test index was removed.
 
-15. Experiment 3 — Composite index column order
+---
+
+# 15. Experiment 3 — Composite index column order
 
 A composite index was tested:
 
+```sql
 CREATE INDEX idx_mess_attendance_student_date_consumed
 ON mess_attendance(student_id, attendance_date, consumed);
+```
 
 The query primarily filters using:
 
+```text
 attendance_date
 consumed
+```
 
 but does not first restrict:
 
+```text
 student_id
-Result
+```
+
+### Result
 
 PostgreSQL continued to use a sequential scan.
 
-Explanation
+### Explanation
 
 The leading column of a composite index is important.
 
 The tested index starts with:
 
+```text
 student_id
+```
 
 while the query needs efficient filtering beginning with:
 
+```text
 attendance_date
+```
 
 Therefore, the index was not useful for this query.
 
@@ -584,155 +685,208 @@ The test index was removed.
 
 This experiment demonstrates why composite-index column order must be chosen according to query access patterns.
 
-16. Experiment 4 — Index on room allocation vacancy lookup
+---
+
+# 16. Experiment 4 — Index on room allocation vacancy lookup
 
 A composite index was tested:
 
+```sql
 CREATE INDEX idx_room_allocations_room_vacated
 ON room_allocations(room_id, vacated_on);
-Before
+```
+
+### Before
+
+```text
 Sequential Scan
 Execution Time: 1.226 ms
-After
+```
+
+### After
+
+```text
 Sequential Scan
 Execution Time: 0.635 ms
+```
 
 PostgreSQL continued to use a sequential scan.
 
-The room_allocations table contains only 400 rows, so scanning the table remained inexpensive.
+The `room_allocations` table contains only 400 rows, so scanning the table remained inexpensive.
 
 The lower runtime was not treated as proof of an index improvement because the execution plan remained unchanged.
 
 The test index was removed.
 
-17. Experiment 5 — Successful index optimization
+---
+
+# 17. Experiment 5 — Successful index optimization
 
 The strongest successful experiment used:
 
+```sql
 CREATE INDEX idx_attendance_date
 ON mess_attendance(attendance_date);
+```
 
 The query retrieves attendance statistics for:
 
+```text
 2026-09-15
-Before
+```
+
+### Before
+
+```text
 Sequential Scan
 Rows matched: 1,200
 Rows removed by filter: 34,800
 Buffers: 300
 Execution Time: 3.937 ms
-After
+```
+
+### After
+
+```text
 Index Scan
 Rows matched: 1,200
 Buffers: approximately 13
 Execution Time: 0.372 ms
-Performance improvement
+```
+
+### Performance improvement
+
+```text
 3.937 ms / 0.372 ms ≈ 10.6x
+```
 
 The execution plan changed from:
 
+```text
 Sequential Scan
+```
 
 to:
 
+```text
 Index Scan
+```
 
 This is a clear example of an index helping a selective query.
 
-The idx_attendance_date index was retained in the final design.
+The `idx_attendance_date` index was retained in the final design.
 
-18. Summary of Index Experiments
-Experiment	Result	Final Decision
-Attendance (date, consumed)	Became slower	Rejected
-Bills billing_month	Sequential scan remained	Rejected
-Attendance (student_id, date, consumed)	Index not used	Rejected
-Allocations (room_id, vacated_on)	Sequential scan remained	Rejected
-Attendance date	About 10.6x faster	Retained
-19. Design Decisions
-Decision 1 — Separate room allocation history
+---
+
+# 18. Summary of Index Experiments
+
+| Experiment | Result | Final Decision |
+|---|---|---|
+| Attendance `(date, consumed)` | Became slower | Rejected |
+| Bills `billing_month` | Sequential scan remained | Rejected |
+| Attendance `(student_id, date, consumed)` | Index not used | Rejected |
+| Allocations `(room_id, vacated_on)` | Sequential scan remained | Rejected |
+| Attendance `date` | About 10.6x faster | Retained |
+
+---
+
+# 19. Design Decisions
+
+## Decision 1 — Separate room allocation history
 
 Instead of storing only the current room directly in the student table, room allocations are stored separately.
 
 This allows:
 
-Historical allocations
-Vacating dates
-Re-allocation
-Current occupancy detection
-Decision 2 — Use vacated_on IS NULL for active allocations
+- Historical allocations
+- Vacating dates
+- Re-allocation
+- Current occupancy detection
 
-An allocation without a vacated_on date represents a currently active allocation.
+## Decision 2 — Use `vacated_on IS NULL` for active allocations
+
+An allocation without a `vacated_on` date represents a currently active allocation.
 
 This avoids deleting historical allocation records.
 
-Decision 3 — Separate meal types
+## Decision 3 — Separate meal types
 
 Meal types are stored in their own table rather than creating columns such as:
 
-breakfast_consumed
-lunch_consumed
-dinner_consumed
+- `breakfast_consumed`
+- `lunch_consumed`
+- `dinner_consumed`
 
 This makes the design more flexible and normalized.
 
-Decision 4 — Separate bill items
+## Decision 4 — Separate bill items
 
-Meal-wise bill details are stored in mess_bill_items.
+Meal-wise bill details are stored in `mess_bill_items`.
 
 This allows a bill to contain separate values for:
 
-Breakfast
-Lunch
-Dinner
+- Breakfast
+- Lunch
+- Dinner
 
 including consumed quantity, rate and amount.
 
-Decision 5 — Composite uniqueness for attendance
+## Decision 5 — Composite uniqueness for attendance
 
 The combination:
 
+```text
 student_id
 meal_type_id
 attendance_date
+```
 
 was chosen as a unique constraint because a student should have only one attendance record for a particular meal on a particular day.
 
-20. Rejected Alternatives
-Alternative 1 — Store only the student's current room
+---
+
+# 20. Rejected Alternatives
+
+## Alternative 1 — Store only the student's current room
 
 This would make historical room allocations difficult to maintain.
 
-The chosen room_allocations table preserves allocation history.
+The chosen `room_allocations` table preserves allocation history.
 
-Alternative 2 — Store breakfast, lunch and dinner as separate columns
+## Alternative 2 — Store breakfast, lunch and dinner as separate columns
 
 This would make the attendance structure less flexible and would require schema changes if new meal types were introduced.
 
-The separate meal_types relation provides a cleaner relational design.
+The separate `meal_types` relation provides a cleaner relational design.
 
-Alternative 3 — Add indexes to every searchable column
+## Alternative 3 — Add indexes to every searchable column
 
 This was rejected because unnecessary indexes:
 
-consume storage
-increase maintenance overhead
-can slow INSERT, UPDATE, and DELETE
-may not improve queries on small tables
+- consume storage
+- increase maintenance overhead
+- can slow `INSERT`, `UPDATE`, and `DELETE`
+- may not improve queries on small tables
 
 The project experiments demonstrate that PostgreSQL may prefer sequential scans even when an index exists.
 
-Alternative 4 — Use a composite index without considering column order
+## Alternative 4 — Use a composite index without considering column order
 
 The experiment with:
 
+```text
 (student_id, attendance_date, consumed)
+```
 
 showed that an index can be ineffective when its leading column does not match the query's filtering pattern.
 
-21. Project Files
+---
+
+# 21. Project Files
 
 The project directory contains:
 
+```text
 hostel-dbms/
 │
 ├── schema.sql
@@ -753,41 +907,77 @@ hostel-dbms/
     ├── query4_after.png
     ├── query5_before.png
     └── query5_after.png
-22. How to Run the Project
-Step 1 — Create the database
+```
+
+---
+
+# 22. How to Run the Project
+
+## Step 1 — Create the database
 
 From PostgreSQL:
 
+```sql
 CREATE DATABASE hostel_db;
+```
 
 Connect to it:
 
+```text
 \c hostel_db
-Step 2 — Create the schema
+```
+
+## Step 2 — Create the schema
 
 From the terminal:
 
+```bash
 psql -d hostel_db -f schema.sql
-Step 3 — Insert the seed data
+```
+
+## Step 3 — Insert the seed data
+
+```bash
 psql -d hostel_db -f seed.sql
-Step 4 — Create final performance indexes
+```
+
+## Step 4 — Create final performance indexes
+
+```bash
 psql -d hostel_db -f indexes.sql
-Step 5 — Run the required queries
+```
+
+## Step 5 — Run the required queries
+
+```bash
 psql -d hostel_db -f queries.sql
-Step 6 — Run EXPLAIN ANALYZE experiments
+```
+
+## Step 6 — Run EXPLAIN ANALYZE experiments
+
+```bash
 psql -d hostel_db -f explain_analyze.sql
-23. Verification
+```
+
+---
+
+# 23. Verification
 
 Useful verification commands include:
 
+```text
 \dt
+```
 
 To inspect a table:
 
+```text
 \d mess_attendance
+```
 
 To inspect final indexes:
 
+```sql
 SELECT
     tablename,
     indexname,
@@ -795,42 +985,56 @@ SELECT
 FROM pg_indexes
 WHERE schemaname = 'public'
 ORDER BY tablename, indexname;
+```
 
 To check attendance volume:
 
+```sql
 SELECT COUNT(*)
 FROM mess_attendance;
+```
 
 To check the number of students:
 
+```sql
 SELECT COUNT(*)
 FROM students;
+```
 
 To check monthly bills:
 
+```sql
 SELECT COUNT(*)
 FROM mess_bills;
-24. Conclusion
+```
+
+---
+
+# 24. Conclusion
 
 The project demonstrates how a relational database can be used to manage hostel room allocation, student occupancy, mess attendance and monthly billing.
 
 The database preserves room-allocation history while allowing current vacancies to be identified using active allocations.
 
-SQL queries demonstrate joins, filtering, aggregation, grouping, HAVING, ordering and subqueries.
+SQL queries demonstrate joins, filtering, aggregation, grouping, `HAVING`, ordering and subqueries.
 
 The indexing experiments demonstrate an important database-management principle:
 
-An index is not automatically beneficial for every query.
+> An index is not automatically beneficial for every query.
 
 The project showed both successful and unsuccessful indexing strategies.
 
-The most successful experiment used an index on attendance_date, reducing the measured execution time from:
+The most successful experiment used an index on `attendance_date`, reducing the measured execution time from:
 
+```text
 3.937 ms
+```
 
 to:
 
+```text
 0.372 ms
+```
 
 and changing the execution plan from a sequential scan to an index scan.
 
