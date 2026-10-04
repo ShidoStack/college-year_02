@@ -326,13 +326,49 @@ public class Library {
         report.append("SMART LIBRARY REPORT\n");
         report.append("=====================\n");
         report.append("Generated: ").append(LocalDate.now()).append("\n\n");
+        
+        report.append("--- SUMMARY STATS ---\n");
         report.append("Total books     : ").append(getTotalBooks()).append("\n");
         report.append("Available books : ").append(getAvailableBooks()).append("\n");
         report.append("Issued books    : ").append(getIssuedBooks()).append("\n");
         report.append("Students        : ").append(getTotalStudents()).append("\n");
         report.append("Transactions    : ").append(borrowingHistory.size()).append("\n");
         report.append("Active issues   : ").append(getActiveBorrowCount()).append("\n");
-        report.append(String.format("Total fines     : Rs. %.2f%n", calculateTotalFines()));
+        report.append(String.format("Total fines     : Rs. %.2f%n\n", calculateTotalFines()));
+        
+        report.append("--- CATEGORY BREAKDOWN ---\n");
+        Map<String, Long> categoryCounts = books.stream()
+                .collect(java.util.stream.Collectors.groupingBy(Book::getCategory, java.util.stream.Collectors.counting()));
+        categoryCounts.forEach((cat, count) -> report.append(cat).append(": ").append(count).append(" books\n"));
+        report.append("\n");
+        
+        report.append("--- STUDENTS WITH FINES ---\n");
+        boolean hasFines = false;
+        for (Student s : students) {
+            double fine = 0;
+            try { fine = calculateStudentFine(s.getId()); } catch (ValidationException ignored) {}
+            if (fine > 0) {
+                report.append(s.getName()).append(" (").append(s.getId()).append("): ")
+                      .append(String.format("Rs. %.2f%n", fine));
+                hasFines = true;
+            }
+        }
+        if (!hasFines) report.append("No active fines.\n");
+        report.append("\n");
+
+        report.append("--- RECENT TRANSACTIONS ---\n");
+        int count = Math.min(5, borrowingHistory.size());
+        if (count == 0) {
+            report.append("No transactions yet.\n");
+        } else {
+            for (int i = 0; i < count; i++) {
+                BorrowRecord r = borrowingHistory.get(i);
+                report.append(r.getRecordId()).append(": Book ").append(r.getBookId())
+                      .append(" -> Student ").append(r.getStudentId())
+                      .append(" (").append(r.isActive() ? "ACTIVE" : "RETURNED").append(")\n");
+            }
+        }
+
         return report.toString();
     }
 

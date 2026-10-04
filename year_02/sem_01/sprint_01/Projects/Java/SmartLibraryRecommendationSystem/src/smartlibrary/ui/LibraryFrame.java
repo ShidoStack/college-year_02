@@ -54,7 +54,6 @@ public class LibraryFrame extends JFrame {
     private final JTable borrowTable = createTable();
     private final JTable recommendationTable = createTable();
 
-    private final JTextArea console = new JTextArea();
     private final JLabel statusLabel = new JLabel("System ready.");
 
     private final JTextField bookSearchField = new JTextField();
@@ -79,157 +78,82 @@ public class LibraryFrame extends JFrame {
         setLayout(new BorderLayout());
 
         add(createHeader(), BorderLayout.NORTH);
-        add(createSidebar(), BorderLayout.WEST);
         add(createMainArea(), BorderLayout.CENTER);
     }
 
     // -------------------- HEADER --------------------
 
     private JPanel createHeader() {
-        JPanel header = new JPanel(new BorderLayout());
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
         header.setBackground(Theme.HEADER);
-        header.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
+        header.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel title = new JLabel("Smart Library Recommendation System");
+        JLabel title = new JLabel("SMART LIBRARY RECOMMENDATION SYSTEM");
         title.setForeground(Color.WHITE);
-        title.setFont(Theme.TITLE_FONT);
-
-        JLabel subtitle = new JLabel("Library management • borrowing • search • sorting • recommendations");
-        subtitle.setForeground(new Color(225, 239, 249));
-        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
-
-        JPanel text = new JPanel();
-        text.setOpaque(false);
-        text.setLayout(new javax.swing.BoxLayout(text, javax.swing.BoxLayout.Y_AXIS));
-
-        text.add(title);
-        text.add(subtitle);
-
-        header.add(text, BorderLayout.WEST);
+        title.setFont(new Font("SansSerif", Font.BOLD, 22));
+        
+        header.add(title);
         return header;
     }
 
     // -------------------- SIDEBAR --------------------
 
-    private JPanel createSidebar() {
-        JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setBackground(Theme.SIDEBAR);
-        sidebar.setPreferredSize(new Dimension(230, 0));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(18, 12, 18, 12));
-
-        JPanel actions = new JPanel();
-        actions.setOpaque(false);
-        actions.setLayout(new GridLayout(0, 1, 0, 9));
-
-        JLabel actionTitle = new JLabel("ACTIONS");
-        actionTitle.setForeground(new Color(177, 192, 202));
-        actionTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
-        actions.add(actionTitle);
-
-        addSidebarButton(actions, "Add Book", e -> showBookDialog(null));
-        addSidebarButton(actions, "Edit Selected Book", e -> editSelectedBook());
-        addSidebarButton(actions, "Delete Selected Book", e -> deleteSelectedBook());
-
-        addSidebarButton(actions, "Add Student", e -> showStudentDialog(null));
-        addSidebarButton(actions, "Edit Selected Student", e -> editSelectedStudent());
-        addSidebarButton(actions, "Delete Selected Student", e -> deleteSelectedStudent());
-
-        addSidebarButton(actions, "Issue Book", e -> issueBookDialog());
-        addSidebarButton(actions, "Return Book", e -> returnBookDialog());
-
-        JLabel spacer = new JLabel();
-        spacer.setPreferredSize(new Dimension(1, 12));
-        actions.add(spacer);
-
-        JLabel reports = new JLabel("REPORTS & VIEWS");
-        reports.setForeground(new Color(177, 192, 202));
-        reports.setFont(new Font("SansSerif", Font.BOLD, 12));
-        actions.add(reports);
-
-        addSidebarButton(actions, "Search Books", e -> focusSearch());
-        addSidebarButton(actions, "Sort Books", e -> sortBooks());
-        addSidebarButton(actions, "Recommendations", e -> recommendationDialog());
-        addSidebarButton(actions, "Borrowing History", e -> showBorrowingHistory());
-        addSidebarButton(actions, "Fine Calculation", e -> fineDialog());
-        addSidebarButton(actions, "Generate Report", e -> showReport());
-        addSidebarButton(actions, "Refresh All", e -> {
-            refreshAll();
-            log("All tables refreshed.");
-        });
-
-        sidebar.add(actions, BorderLayout.NORTH);
-
-        JLabel footer = new JLabel(
-                "<html><center>Java Swing<br>OOP • Collections • CRUD<br>Search • Sort • Validation</center></html>",
-                SwingConstants.CENTER);
-        footer.setForeground(new Color(173, 188, 198));
-        footer.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        sidebar.add(footer, BorderLayout.SOUTH);
-
-        return sidebar;
-    }
-
-    private void addSidebarButton(JPanel panel, String text, java.awt.event.ActionListener listener) {
-        JButton button = new JButton(text);
-        Theme.styleButton(button);
-        button.setPreferredSize(new Dimension(205, 40));
-        button.addActionListener(listener);
-        panel.add(button);
-    }
-
     // -------------------- MAIN AREA --------------------
 
     private JPanel createMainArea() {
-        JPanel main = new JPanel(new BorderLayout(0, 10));
-        main.setBackground(Theme.PANEL);
-        main.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        tabs.setFont(new Font("SansSerif", Font.BOLD, 14));
+        
+        tabs.addTab("1. Manage Books", createBooksTab());
+        tabs.addTab("2. Manage Students", createStudentsTab());
+        tabs.addTab("3. Issue / Return", createBorrowTab());
+        tabs.addTab("4. Recommendations", createRecommendationTab());
+        tabs.addTab("5. Generate Report", createReportTab());
 
-        tabs.addTab("Books", createBooksTab());
-        tabs.addTab("Students", createStudentsTab());
-        tabs.addTab("Borrow Records", createBorrowTab());
-        tabs.addTab("Recommendations", createRecommendationTab());
-
-        main.add(tabs, BorderLayout.CENTER);
-        main.add(createConsolePanel(), BorderLayout.SOUTH);
-
-        return main;
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(tabs, BorderLayout.CENTER);
+        return mainPanel;
     }
 
     private JPanel createBooksTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(Theme.panelBorder());
+        panel.setBackground(Theme.PANEL);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel toolbar = new JPanel(new BorderLayout(8, 0));
-        toolbar.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 8));
-        toolbar.setBackground(Color.WHITE);
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controls.setBackground(Theme.PANEL);
+        controls.setBorder(BorderFactory.createTitledBorder("Manage Books & Search Filters"));
+        
+        controls.add(new JLabel("Search:"));
+        bookSearchField.setPreferredSize(new Dimension(150, 25));
+        controls.add(bookSearchField);
+        JButton searchBtn = new JButton("Search");
+        Theme.styleButton(searchBtn);
+        searchBtn.addActionListener(e -> searchBooks());
+        controls.add(searchBtn);
 
-        JPanel searchPanel = new JPanel(new BorderLayout(6, 0));
-        searchPanel.setOpaque(false);
-        JLabel searchLabel = new JLabel("Search:");
-        searchLabel.setFont(Theme.SECTION_FONT);
-        searchPanel.add(searchLabel, BorderLayout.WEST);
-        searchPanel.add(bookSearchField, BorderLayout.CENTER);
+        controls.add(new JLabel("Sort by:"));
+        controls.add(sortCombo);
+        JButton sortBtn = new JButton("Apply");
+        Theme.styleButton(sortBtn);
+        sortBtn.addActionListener(e -> sortBooks());
+        controls.add(sortBtn);
 
-        JButton searchButton = new JButton("Search");
-        Theme.styleButton(searchButton);
-        searchButton.addActionListener(e -> searchBooks());
-        searchPanel.add(searchButton, BorderLayout.EAST);
+        JButton addBtn = new JButton("Add Book");
+        Theme.styleButton(addBtn);
+        addBtn.addActionListener(e -> showBookDialog(null));
+        controls.add(addBtn);
 
-        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        sortPanel.setOpaque(false);
-        sortPanel.add(new JLabel("Sort by:"));
-        sortPanel.add(sortCombo);
+        JButton editBtn = new JButton("Edit");
+        Theme.styleButton(editBtn);
+        editBtn.addActionListener(e -> editSelectedBook());
+        controls.add(editBtn);
+        
+        JButton delBtn = new JButton("Delete");
+        Theme.styleButton(delBtn);
+        delBtn.addActionListener(e -> deleteSelectedBook());
+        controls.add(delBtn);
 
-        JButton sortButton = new JButton("Apply");
-        Theme.styleButton(sortButton);
-        sortButton.addActionListener(e -> sortBooks());
-        sortPanel.add(sortButton);
-
-        toolbar.add(searchPanel, BorderLayout.CENTER);
-        toolbar.add(sortPanel, BorderLayout.EAST);
-
-        panel.add(toolbar, BorderLayout.NORTH);
+        panel.add(controls, BorderLayout.NORTH);
         panel.add(new JScrollPane(booksTable), BorderLayout.CENTER);
 
         return panel;
@@ -237,96 +161,107 @@ public class LibraryFrame extends JFrame {
 
     private JPanel createStudentsTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(Theme.panelBorder());
+        panel.setBackground(Theme.PANEL);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        top.setBackground(Color.WHITE);
-        JLabel info = new JLabel("Student records • use the sidebar for Add / Edit / Delete");
-        info.setForeground(Theme.MUTED);
-        top.add(info);
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controls.setBackground(Theme.PANEL);
+        controls.setBorder(BorderFactory.createTitledBorder("Manage Students Controls"));
+        
+        JButton addBtn = new JButton("Add Student");
+        Theme.styleButton(addBtn);
+        addBtn.addActionListener(e -> showStudentDialog(null));
+        controls.add(addBtn);
 
-        panel.add(top, BorderLayout.NORTH);
+        JButton editBtn = new JButton("Edit");
+        Theme.styleButton(editBtn);
+        editBtn.addActionListener(e -> editSelectedStudent());
+        controls.add(editBtn);
+        
+        JButton delBtn = new JButton("Delete");
+        Theme.styleButton(delBtn);
+        delBtn.addActionListener(e -> deleteSelectedStudent());
+        controls.add(delBtn);
+        
+        JButton fineBtn = new JButton("Calculate Fine");
+        Theme.styleButton(fineBtn);
+        fineBtn.addActionListener(e -> fineDialog());
+        controls.add(fineBtn);
+
+        panel.add(controls, BorderLayout.NORTH);
         panel.add(new JScrollPane(studentsTable), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel createBorrowTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(Theme.panelBorder());
+        panel.setBackground(Theme.PANEL);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        top.setBackground(Color.WHITE);
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controls.setBackground(Theme.PANEL);
+        controls.setBorder(BorderFactory.createTitledBorder("Issue & Return Controls"));
 
-        JButton activeOnly = new JButton("Show Active Issues");
+        JButton issueBtn = new JButton("Issue Book");
+        Theme.styleButton(issueBtn);
+        issueBtn.addActionListener(e -> issueBookDialog());
+        controls.add(issueBtn);
+        
+        JButton returnBtn = new JButton("Return Book");
+        Theme.styleButton(returnBtn);
+        returnBtn.addActionListener(e -> returnBookDialog());
+        controls.add(returnBtn);
+
+        JButton activeOnly = new JButton("Active Issues");
         Theme.styleButton(activeOnly);
         activeOnly.addActionListener(e -> showActiveBorrowRecords());
+        controls.add(activeOnly);
 
-        JButton all = new JButton("Show All History");
+        JButton all = new JButton("All History");
         Theme.styleButton(all);
-        all.addActionListener(e -> refreshBorrowTable(library.getBorrowingHistory()));
+        all.addActionListener(e -> showBorrowingHistory());
+        controls.add(all);
 
-        top.add(new JLabel("Borrowing history:"));
-        top.add(activeOnly);
-        top.add(all);
-
-        panel.add(top, BorderLayout.NORTH);
+        panel.add(controls, BorderLayout.NORTH);
         panel.add(new JScrollPane(borrowTable), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel createRecommendationTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(Theme.panelBorder());
+        panel.setBackground(Theme.PANEL);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        top.setBackground(Color.WHITE);
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controls.setBackground(Theme.PANEL);
+        controls.setBorder(BorderFactory.createTitledBorder("Recommendations"));
 
         JButton recommend = new JButton("Get Recommendations");
         Theme.styleButton(recommend);
         recommend.addActionListener(e -> recommendationDialog());
+        controls.add(recommend);
 
-        JLabel note = new JLabel(
-                "Recommendations use a simple preference score from the student's borrowing categories/tags.");
-        note.setForeground(Theme.MUTED);
-
-        top.add(recommend);
-        top.add(note);
-
-        panel.add(top, BorderLayout.NORTH);
+        panel.add(controls, BorderLayout.NORTH);
         panel.add(new JScrollPane(recommendationTable), BorderLayout.CENTER);
         return panel;
     }
 
-    private JPanel createConsolePanel() {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 4));
-        wrapper.setBackground(Theme.PANEL);
-        wrapper.setPreferredSize(new Dimension(0, 165));
+    private JPanel createReportTab() {
+        JPanel panel = new JPanel(new BorderLayout(0, 8));
+        panel.setBackground(Theme.PANEL);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel title = new JLabel("System Console");
-        title.setFont(Theme.SECTION_FONT);
-        title.setForeground(new Color(58, 78, 99));
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controls.setBackground(Theme.PANEL);
+        controls.setBorder(BorderFactory.createTitledBorder("Generate Library Report"));
+        
+        JButton reportBtn = new JButton("Generate Report");
+        Theme.styleButton(reportBtn);
+        reportBtn.addActionListener(e -> showReport());
+        controls.add(reportBtn);
 
-        console.setEditable(false);
-        console.setFont(Theme.MONO_FONT);
-        console.setBackground(new Color(238, 242, 245));
-        console.setForeground(new Color(49, 64, 78));
-        console.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        console.setLineWrap(true);
-        console.setWrapStyleWord(true);
-
-        JPanel consoleBorder = new JPanel(new BorderLayout());
-        consoleBorder.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(176, 184, 191)),
-                BorderFactory.createLineBorder(new Color(220, 224, 228))
-        ));
-        consoleBorder.add(new JScrollPane(console), BorderLayout.CENTER);
-
-        wrapper.add(title, BorderLayout.NORTH);
-        wrapper.add(consoleBorder, BorderLayout.CENTER);
-        return wrapper;
+        panel.add(controls, BorderLayout.NORTH);
+        return panel;
     }
 
     // -------------------- TABLES --------------------
@@ -849,8 +784,7 @@ public class LibraryFrame extends JFrame {
     }
 
     private void log(String message) {
-        console.append(message + "\n");
-        console.setCaretPosition(console.getDocument().getLength());
+        System.out.println(message);
         updateStatus();
     }
 
