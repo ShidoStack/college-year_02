@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — SmartLibrary</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="auth-body">
+    <div class="auth-container">
+      <div class="auth-brand">
+        <div class="auth-brand-icon" id="authBrandIcon"></div>
+        <h1 class="auth-brand-name">SmartLibrary</h1>
+        <p class="auth-brand-tagline">College Library Management System</p>
+      </div>
+
+      <div class="auth-card">
+        <h2 class="auth-title">Sign In</h2>
+        <p class="auth-subtitle">Enter your credentials to access the library</p>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@college.edu" required autocomplete="email" />
+            <span class="form-error" id="emailError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password" />
+            <span class="form-error" id="passwordError"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
+        </form>
+
+        <div class="auth-demo-info">
+          <p class="auth-demo-title">Demo Accounts</p>
+          <p class="auth-demo-account"><strong>Student:</strong> rahul.s@college.edu / student123</p>
+          <p class="auth-demo-account"><strong>Librarian:</strong> meena.i@college.edu / librarian123</p>
+        </div>
+
+        <p class="auth-footer">
+          Don't have an account? <a href="/register.html">Register here</a>
+        </p>
+      </div>
+    </div>
+
+    <script type="module">
+      import { auth } from './js/auth.js';
+      import { icons } from './js/ui.js';
+      import { toast } from './js/ui.js';
+
+      // Redirect if already logged in
+      auth.init();
+      if (auth.isLoggedIn()) {
+        window.location.href = './index.html';
+      }
+
+      document.getElementById('authBrandIcon').innerHTML = icons.book;
+      const form = document.getElementById('loginForm');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        document.getElementById('emailError').textContent = '';
+        document.getElementById('passwordError').textContent = '';
+
+        let valid = true;
+        if (!email) {
+          document.getElementById('emailError').textContent = 'Email is required.';
+          valid = false;
+        }
+        if (!password) {
+          document.getElementById('passwordError').textContent = 'Password is required.';
+          valid = false;
+        }
+        if (!valid) return;
+
+        const btn = document.getElementById('loginBtn');
+        btn.textContent = 'Signing in...';
+        btn.disabled = true;
+
+        try {
+          await auth.login(email, password);
+          window.location.href = './index.html';
+        } catch (err) {
+          btn.textContent = 'Sign In';
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

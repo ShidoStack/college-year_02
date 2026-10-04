@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register — SmartLibrary</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="auth-body">
+    <div class="auth-container">
+      <div class="auth-brand">
+        <div class="auth-brand-icon" id="authBrandIcon"></div>
+        <h1 class="auth-brand-name">SmartLibrary</h1>
+        <p class="auth-brand-tagline">College Library Management System</p>
+      </div>
+
+      <div class="auth-card">
+        <h2 class="auth-title">Create Account</h2>
+        <p class="auth-subtitle">Register to access the college library</p>
+
+        <form id="registerForm" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="John Doe" required autocomplete="name" />
+            <span class="form-error" id="nameError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@college.edu" required autocomplete="email" />
+            <span class="form-error" id="emailError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="membershipId">Membership ID</label>
+            <input type="text" id="membershipId" name="membershipId" placeholder="STU20240XX" required />
+            <span class="form-error" id="membershipIdError"></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" placeholder="Min 6 characters" required autocomplete="new-password" />
+              <span class="form-error" id="passwordError"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required autocomplete="new-password" />
+              <span class="form-error" id="confirmPasswordError"></span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="registerBtn">Create Account</button>
+        </form>
+
+        <p class="auth-footer">
+          Already have an account? <a href="/login.html">Sign in here</a>
+        </p>
+      </div>
+    </div>
+
+    <script type="module">
+      import { auth } from './js/auth.js';
+      import { icons, toast } from './js/ui.js';
+
+      auth.init();
+      if (auth.isLoggedIn()) {
+        window.location.href = './index.html';
+      }
+
+      document.getElementById('authBrandIcon').innerHTML = icons.book;
+      const form = document.getElementById('registerForm');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const membershipId = document.getElementById('membershipId').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Clear errors
+        ['nameError', 'emailError', 'membershipIdError', 'passwordError', 'confirmPasswordError'].forEach(id => {
+          document.getElementById(id).textContent = '';
+        });
+
+        let valid = true;
+        if (!name) { document.getElementById('nameError').textContent = 'Name is required.'; valid = false; }
+        if (!email) { document.getElementById('emailError').textContent = 'Email is required.'; valid = false; }
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').textContent = 'Invalid email format.'; valid = false; }
+        if (!membershipId) { document.getElementById('membershipIdError').textContent = 'Membership ID is required.'; valid = false; }
+        if (!password) { document.getElementById('passwordError').textContent = 'Password is required.'; valid = false; }
+        else if (password.length < 6) { document.getElementById('passwordError').textContent = 'Password must be at least 6 characters.'; valid = false; }
+        if (password !== confirmPassword) { document.getElementById('confirmPasswordError').textContent = 'Passwords do not match.'; valid = false; }
+
+        if (!valid) return;
+
+        const btn = document.getElementById('registerBtn');
+        btn.textContent = 'Creating account...';
+        btn.disabled = true;
+
+        try {
+          await auth.register({ name, email, membershipId, password });
+          window.location.href = './index.html';
+        } catch (err) {
+          btn.textContent = 'Create Account';
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
