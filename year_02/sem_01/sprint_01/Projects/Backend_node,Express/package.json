@@ -1,0 +1,25 @@
+{
+  "name": "smartlibrary",
+  "version": "1.0.0",
+  "description": "SmartLibrary - College Library Management System (Unified Express + Vanilla JS)",
+  "private": true,
+  "main": "backend/src/server.js",
+  "scripts": {
+    "build": "npm --prefix src install --include=dev && npm --prefix src run build && npm --prefix backend install",
+    "start": "node backend/src/server.js",
+    "seed": "npm --prefix backend run seed",
+    "test:e2e": "node backend/src/scripts/comprehensive_test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "library-management",
+    "express",
+    "mongodb",
+    "firebase-auth",
+    "socket.io"
+  ],
+  "author": "",
+  "license": "ISC"
+}

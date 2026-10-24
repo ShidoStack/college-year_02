@@ -94,7 +94,7 @@ export const dashboardView = {
                   <td>
                     <div style="display:flex;align-items:center;gap:8px;">
                       ${bookCover(book)}
-                      <span style="font-weight:500;">${escapeHtml(book.title)}</span>
+                      <span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span>
                     </div>
                   </td>
                   <td>${formatDate(b.issueDate)}</td>
@@ -122,7 +122,7 @@ export const dashboardView = {
               const book = store.getBook(r.bookId);
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
                   <td>${formatDate(r.reservedOn)}</td>
                   <td>${statusBadge(r.status)}</td>
                 </tr>
@@ -147,7 +147,7 @@ export const dashboardView = {
               const book = store.getBook(b.bookId);
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
                   <td>${formatDate(b.issueDate)}</td>
                   <td>${formatDate(b.dueDate)}</td>
                   <td>${formatDate(b.returnDate)}</td>
@@ -242,8 +242,8 @@ export const dashboardView = {
               const member = store.getMember(b.memberId);
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                  <td>${escapeHtml(member.name)}</td>
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                  <td>${escapeHtml(member ? member.name : 'Unknown')}</td>
                   <td>${formatDate(b.issueDate)}</td>
                   <td>${formatDate(b.dueDate)}</td>
                   <td>${statusBadge(b.status)}</td>
@@ -272,8 +272,8 @@ export const dashboardView = {
               const fine = days > 0 ? days * 5 : 0;
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                  <td>${escapeHtml(member.name)}</td>
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                  <td>${escapeHtml(member ? member.name : 'Unknown')}</td>
                   <td>${formatDate(b.dueDate)}</td>
                   <td><span class="text-danger">${days} days</span></td>
                   <td><span class="fine-amount">$${fine}</span></td>

@@ -343,7 +343,7 @@ export const managementView = {
           </div>
           <div class="form-group">
             <label>Publication Year</label>
-            <input type="number" id="bf-year" value="${book ? book.year : ''}" min="1800" max="2025" />
+            <input type="number" id="bf-year" value="${book ? book.year : ''}" min="1800" max="2099" />
           </div>
           <div class="form-group">
             <label>Total Copies *</label>

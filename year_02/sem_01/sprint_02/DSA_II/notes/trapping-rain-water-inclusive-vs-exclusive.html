@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inclusive vs Exclusive Max</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column; two method panels side by side on wide screens, stacked on phones */
+:root {
+  --bg:#f6f8fb; --surface:#ffffff; --fg:#0e1726; --muted:#3a4658; --border:#748196;
+  --bar:#d5dbe4; --barStroke:#0e1726; --water:#2f7fd8; --level:#a84a00;
+  --neg:#b3122e; --negBg:#fde7ea; --ok:#0b6b3a; --accent:#1452a8; --codeBg:#eef2f7;
+  --font-body:"Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --font-mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#0d1117; --surface:#161b24; --fg:#f2f5f9; --muted:#c3ccd8; --border:#6c788c;
+  --bar:#3a4352; --barStroke:#e6ebf2; --water:#4ea3ff; --level:#ffb35c;
+  --neg:#ff8a96; --negBg:#3a1820; --ok:#5fd39a; --accent:#8cc2ff; --codeBg:#0f141c; color-scheme:dark } }
+:root[data-theme="dark"] {
+  --bg:#0d1117; --surface:#161b24; --fg:#f2f5f9; --muted:#c3ccd8; --border:#6c788c;
+  --bar:#3a4352; --barStroke:#e6ebf2; --water:#4ea3ff; --level:#ffb35c;
+  --neg:#ff8a96; --negBg:#3a1820; --ok:#5fd39a; --accent:#8cc2ff; --codeBg:#0f141c; color-scheme:dark }
+/* Reader-chosen themes (toggle) */
+:root[data-skin="light"] {
+  --bg:#f6f8fb; --surface:#ffffff; --fg:#0e1726; --muted:#3a4658; --border:#748196;
+  --bar:#d5dbe4; --barStroke:#0e1726; --water:#2f7fd8; --level:#a84a00;
+  --neg:#b3122e; --negBg:#fde7ea; --ok:#0b6b3a; --accent:#1452a8; --codeBg:#eef2f7; color-scheme:light }
+:root[data-skin="dark"] {
+  --bg:#0d1117; --surface:#161b24; --fg:#f2f5f9; --muted:#c3ccd8; --border:#6c788c;
+  --bar:#3a4352; --barStroke:#e6ebf2; --water:#4ea3ff; --level:#ffb35c;
+  --neg:#ff8a96; --negBg:#3a1820; --ok:#5fd39a; --accent:#8cc2ff; --codeBg:#0f141c; color-scheme:dark }
+:root[data-skin="hc"] {
+  --bg:#000000; --surface:#000000; --fg:#ffffff; --muted:#ffffff; --border:#ffffff;
+  --bar:#3d3d3d; --barStroke:#ffffff; --water:#00b7ff; --level:#ffd400;
+  --neg:#ff7a7a; --negBg:#3a0000; --ok:#33ff99; --accent:#ffff00; --codeBg:#111111; color-scheme:dark }
+:root[data-skin="sepia"] {
+  --bg:#f3e9d2; --surface:#fbf4e4; --fg:#2b1d0e; --muted:#4f3b22; --border:#8f744c;
+  --bar:#e2d3b3; --barStroke:#2b1d0e; --water:#2d6f9e; --level:#8a3d00;
+  --neg:#9b1c1c; --negBg:#f6d7cf; --ok:#2f5d1a; --accent:#6b3a00; --codeBg:#efe2c6; color-scheme:light }
+:root[data-skin="ocean"] {
+  --bg:#06263a; --surface:#0b3350; --fg:#eaf6ff; --muted:#c3def0; --border:#4f86ab;
+  --bar:#1d4f70; --barStroke:#eaf6ff; --water:#5cc8ff; --level:#ffd27a;
+  --neg:#ffa3ad; --negBg:#3d1f2c; --ok:#7fe8b0; --accent:#9fe0ff; --codeBg:#08263b; color-scheme:dark }
+:root[data-skin="forest"] {
+  --bg:#0f2418; --surface:#163121; --fg:#eef7ee; --muted:#c6dcc9; --border:#5f8c6a;
+  --bar:#2a4a35; --barStroke:#eef7ee; --water:#6cc3ff; --level:#ffcf6b;
+  --neg:#ffa6a6; --negBg:#3d2020; --ok:#9ef0b0; --accent:#c2f29a; --codeBg:#102619; color-scheme:dark }
+
+body { background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:17px; line-height:1.55; font-weight:700; }
+.wrap { max-width:1180px; margin:0 auto; padding-block:28px 56px;
+  padding-left:16px; padding-right:16px;
+  display:flex; flex-direction:column; gap:28px; }
+h1 { font-size:clamp(1.7rem, 4vw, 2.4rem); line-height:1.15; margin:0; text-wrap:balance; }
+h2 { font-size:1.35rem; margin:0; text-wrap:balance; }
+h3 { font-size:1.1rem; margin:0; }
+p { margin:0; max-width:70ch; }
+.lead { color:var(--muted); }
+.mono, code, pre { font-family:var(--font-mono); }
+.eyebrow { text-transform:uppercase; letter-spacing:.08em; font-size:.8rem; color:var(--accent); }
+
+.themes { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.themes span { color:var(--muted); margin-right:4px; }
+.themes button, .tabs button {
+  font:inherit; font-size:.92rem; font-weight:700; color:var(--fg); background:var(--surface);
+  border:2px solid var(--border); border-radius:8px; padding:6px 12px; cursor:pointer; }
+.themes button[aria-pressed="true"], .tabs button[aria-selected="true"] { border-color:var(--accent); color:var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
+button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+
+.formulas { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; }
+.panel { background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:14px; min-width:0; }
+.formula { font-family:var(--font-mono); font-size:1rem; background:var(--codeBg); border-radius:8px; padding:12px 14px; overflow-x:auto; white-space:nowrap; }
+.formula .clamp { color:var(--neg); }
+.defs { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:0; }
+.defs dt { font-family:var(--font-mono); color:var(--accent); }
+.defs dd { margin:0; }
+
+.scroll { overflow-x:auto; }
+svg.chart { display:block; width:100%; min-width:720px; height:auto; }
+svg .bar { fill:var(--bar); stroke:var(--barStroke); stroke-width:2.5; }
+svg .water { fill:var(--water); }
+svg .ground { stroke:var(--barStroke); stroke-width:3; }
+svg .level { stroke:var(--level); stroke-width:4; stroke-dasharray:7 5; }
+svg .cross { stroke:var(--neg); stroke-width:4; }
+svg text { fill:var(--fg); font-family:var(--font-mono); font-weight:700; font-size:15px; }
+svg text.small { fill:var(--muted); font-size:13px; }
+svg text.lbl { fill:var(--accent); font-family:var(--font-body); font-size:15px; }
+svg text.neg { fill:var(--neg); }
+svg text.pos { fill:var(--ok); }
+svg .cell { fill:var(--surface); stroke:var(--border); stroke-width:1.5; }
+svg .cell.head, svg .cell.lab { fill:var(--codeBg); }
+svg .cell.neg { fill:var(--negBg); }
+svg .guide { stroke:var(--border); stroke-width:1; stroke-dasharray:2 4; }
+
+.legend { display:flex; flex-wrap:wrap; gap:8px 20px; font-size:.92rem; }
+.legend i { display:inline-block; width:22px; height:14px; vertical-align:-2px; margin-right:6px; border-radius:3px; }
+.lg-water { background:var(--water); }
+.lg-level { background:transparent; border-top:4px dashed var(--level); height:0 !important; vertical-align:4px !important; border-radius:0 !important; }
+.lg-neg { background:var(--negBg); outline:2px solid var(--neg); }
+
+table { border-collapse:collapse; font-variant-numeric:tabular-nums; width:100%; }
+.trace td, .trace th { border:1.5px solid var(--border); padding:6px 8px; text-align:center; font-family:var(--font-mono); min-width:34px; }
+.trace th[scope="row"] { text-align:left; font-family:var(--font-body); white-space:nowrap; color:var(--accent); }
+.trace thead th { color:var(--muted); }
+.trace td.neg { background:var(--negBg); color:var(--neg); }
+.trace td.pos { color:var(--ok); }
+.trace tr.total td, .trace tr.total th { border-top:3px solid var(--fg); }
+.note { color:var(--muted); font-size:.95rem; }
+.note b { color:var(--fg); }
+
+.compare th, .compare td { border:1.5px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top; }
+.compare thead th { color:var(--accent); }
+.compare td code { background:var(--codeBg); padding:1px 5px; border-radius:4px; }
+
+.tabs { display:flex; flex-wrap:wrap; gap:8px; }
+pre { background:var(--codeBg); border:1.5px solid var(--border); border-radius:10px; padding:16px; margin:0; overflow-x:auto; font-size:.92rem; line-height:1.5; }
+.codegrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:16px; }
+.codegrid > div { min-width:0; display:flex; flex-direction:column; gap:8px; }
+.stepper { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.stepper button { font:inherit; font-size:.92rem; font-weight:700; color:var(--fg); background:var(--surface); border:2px solid var(--border); border-radius:8px; padding:6px 12px; cursor:pointer; }
+.stepchips { display:flex; flex-wrap:wrap; gap:6px; }
+.stepper .stepchips button { min-width:44px; padding:6px 10px; }
+.stepper .stepchips button[aria-current="step"] { background:var(--accent); color:var(--surface); border-color:var(--accent); }
+.stepper button:disabled { opacity:.45; cursor:default; }
+.ptrL { color:var(--accent); } .ptrR { color:var(--level); }
+.lg-cur { background:var(--bar); outline:3px solid var(--accent); }
+svg .bar.cur { stroke:var(--accent); stroke-width:5; }
+svg text.ptrL { fill:var(--accent); font-size:17px; } svg text.ptrR { fill:var(--level); font-size:17px; }
+svg .ptrline { stroke-width:3; } svg .ptrline.l { stroke:var(--accent); } svg .ptrline.r { stroke:var(--level); }
+.trace tr.cur td { outline:3px solid var(--accent); outline-offset:-3px; }
+.cards3 { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; }
+.panel.mini { padding:16px; gap:10px; }
+.panel.mini .formula { font-size:.88rem; white-space:normal; }
+.stepper button.play { border-color:var(--accent); color:var(--accent); }
+.lg-used { background:var(--codeBg); outline:3px solid var(--ok); }
+svg .cell.used { fill:var(--codeBg); stroke:var(--ok); stroke-width:3.5; }
+.know { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
+@media (max-width:700px){ .know { grid-template-columns:1fr; } }
+.know > div { border:2px solid var(--border); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; min-width:0; background:var(--surface); }
+.know h4 { margin:0; font-size:1rem; color:var(--accent); }
+.know .kv { font-family:var(--font-mono); font-size:.95rem; }
+.know .exact { color:var(--ok); } .know .unknown { color:var(--level); }
+.know .verdict { grid-column:1 / -1; border-color:var(--ok); display:block; }
+.know .verdict b { color:var(--ok); }
+.callout { border:2px solid var(--neg); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+.callout h3 { color:var(--neg); }
+@keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+@keyframes drop { from { transform:translateY(-16px); opacity:.25; } to { transform:none; opacity:1; } }
+@keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+svg .water.new { transform-box:fill-box; transform-origin:50% 100%; animation:grow .8s ease-out; }
+svg .moved { animation:drop .55s ease-out; }
+svg .cell.used.new { animation:fadein .6s ease-out; }
+.know.anim > div { animation:fadein .5s ease-out both; }
+.know.anim > div:nth-child(2) { animation-delay:.15s; } .know.anim > div:nth-child(3) { animation-delay:.3s; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+@media (max-width:420px){ .codegrid, .formulas { grid-template-columns:1fr; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <div class="eyebrow">LeetCode 42 · Trapping Rain Water · Dynamic Programming</div>
+    <h1>Inclusive vs Exclusive Max Arrays</h1>
+    <p class="lead">The same input traced with two dynamic programming versions and the two-pointer optimisation. Both give the correct answer of 6 units. They differ only in whether bar <span class="mono">i</span> counts itself when finding the tallest bar on each side, and that decides whether the formula needs a clamp.</p>
+    <div class="themes" role="group" aria-label="Colour theme">
+      <span>Theme:</span>
+      <button data-skin="auto">Auto</button><button data-skin="dark">Dark</button><button data-skin="light">Light</button><button data-skin="hc">High Contrast</button><button data-skin="sepia">Sepia</button><button data-skin="ocean">Ocean</button><button data-skin="forest">Forest</button>
+    </div>
+  </header>
+
+  <section class="formulas" aria-label="Formulas">
+    <div class="panel">
+      <h2>Inclusive (counts bar i)</h2>
+      <dl class="defs">
+        <dt>leftMax[i]</dt><dd>tallest bar in indices 0 … i</dd>
+        <dt>rightMax[i]</dt><dd>tallest bar in indices i … n−1</dd>
+        <dt>base case</dt><dd>leftMax[0] = height[0], rightMax[n−1] = height[n−1]</dd>
+      </dl>
+      <div class="formula">water[i] = min(leftMax[i], rightMax[i]) − height[i]</div>
+      <p class="note">Both maxima are at least <b>height[i]</b>, so the result is <b>never negative</b>. No clamp needed.</p>
+    </div>
+    <div class="panel">
+      <h2>Exclusive (leaves bar i out)</h2>
+      <dl class="defs">
+        <dt>leftMax[i]</dt><dd>tallest bar in indices 0 … i−1</dd>
+        <dt>rightMax[i]</dt><dd>tallest bar in indices i+1 … n−1</dd>
+        <dt>base case</dt><dd>leftMax[0] = 0, rightMax[n−1] = 0 (nothing there, ground level)</dd>
+      </dl>
+      <div class="formula">water[i] = <span class="clamp">max(0,</span> min(leftMax[i], rightMax[i]) − height[i]<span class="clamp">)</span></div>
+      <p class="note">A bar taller than everything on one side gives a <b>negative</b> value. The <b>max(0, …)</b> clamp turns it into 0.</p>
+    </div>
+  </section>
+
+  <section class="panel" id="inc"></section>
+  <section class="panel" id="exc"></section>
+
+  <section class="panel" id="tp">
+    <div class="eyebrow">Version 3 · Optimised</div>
+    <h2>Two pointers: the DP formula without the arrays</h2>
+    <div class="cards3">
+      <div class="panel mini">
+        <h3>1 · What DP does</h3>
+        <p class="note">Builds <b>both</b> arrays first, so for every bar it knows leftMax[i] and rightMax[i] exactly. Then <b>water[i] = min(leftMax[i], rightMax[i]) − height[i]</b>. Cost: two extra arrays, O(n) space.</p>
+      </div>
+      <div class="panel mini">
+        <h3>2 · What two pointers notices</h3>
+        <p class="note">The formula only ever uses the <b>smaller</b> of the two maxima. If we can prove which side is smaller, we only need that side's max, and it can be kept in <b>one variable</b> per side.</p>
+      </div>
+      <div class="panel mini">
+        <h3>3 · The check that proves it</h3>
+        <div class="formula">if (height[left] &lt; height[right])</div>
+        <p class="note">The bar at R is taller, so the true rightMax is <b>at least height[right]</b>, which is at least leftMax. So <b>min = leftMax</b>, known exactly. Otherwise the mirror case: min = rightMax.</p>
+      </div>
+    </div>
+
+    <div class="stepper" role="group" aria-label="Step through the dry run">
+      <button id="tpPrev">◀ Previous</button>
+      <button id="tpPlay" class="play">▶ Play</button>
+      <div class="stepchips" id="tpChips" role="group" aria-label="Jump to step"></div>
+      <button id="tpNext">Next ▶</button>
+    </div>
+    <div><span id="tpLabel" class="mono"></span></div>
+    <div class="legend"><span><i class="lg-water"></i>water found so far</span><span><i class="lg-cur"></i>bar processed in this step</span><span><i class="lg-used"></i>DP value the two pointers used (the minimum)</span><span><b class="ptrL">L ▼</b> left pointer</span><span><b class="ptrR">R ▼</b> right pointer</span></div>
+    <div class="scroll" id="tpChart"></div>
+
+    <div class="know" id="tpKnow" aria-live="polite"></div>
+    <p class="note" id="tpWhy"></p>
+
+    <h3>Full dry run</h3>
+    <div class="scroll"><table class="trace" id="tpTable"></table></div>
+
+    <h3>Why the check matters: it always picks the DP minimum</h3>
+    <p class="note">Each bar's DP values side by side with the side the two pointers chose. In every row the chosen side is the one with the smaller DP max.</p>
+    <div class="scroll"><table class="trace" id="tpProof"></table></div>
+    <div class="callout">
+      <h3>What goes wrong without the check</h3>
+      <p class="note">Suppose we ignore the check and always use leftMax. At <b>index 8</b> (height 2): leftMax = 3, so we would add 3 − 2 = <b>1</b>. DP says min(3, <b>2</b>) − 2 = <b>0</b>, because the right wall (2) is the real limit. Doing that for every bar gives a total of <b>11</b> instead of <b>6</b>. The check stops us from using a max that is not the bottleneck.</p>
+    </div>
+    <h3>DP vs two pointers</h3>
+    <div class="scroll"><table class="compare">
+      <thead><tr><th scope="col">Point</th><th scope="col">DP (prefix and suffix arrays)</th><th scope="col">Two pointers</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Time</th><td>O(n), three passes</td><td>O(n), one pass</td></tr>
+        <tr><th scope="row">Extra space</th><td>O(n), two arrays</td><td><b>O(1)</b>, four variables</td></tr>
+        <tr><th scope="row">Smaller side's max</th><td>exact (array)</td><td>exact (variable)</td></tr>
+        <tr><th scope="row">Bigger side's max</th><td>exact, but never needed</td><td>only "at least height[parked pointer]"</td></tr>
+        <tr><th scope="row">Inclusive?</th><td>yes</td><td>yes, so no clamp</td></tr>
+      </tbody>
+    </table></div>
+    <div class="codegrid">
+      <div><h3>Java</h3><pre><code>public int trap(int[] height) {
+    int left = 0, right = height.length - 1;
+    int leftMax = 0, rightMax = 0, water = 0;
+
+    while (left &lt; right) {
+        if (height[left] &lt; height[right]) {
+            // left side is the bottleneck
+            leftMax = Math.max(leftMax, height[left]);
+            water += leftMax - height[left];
+            left++;
+        } else {
+            // right side is the bottleneck
+            rightMax = Math.max(rightMax, height[right]);
+            water += rightMax - height[right];
+            right--;
+        }
+    }
+    return water;
+}</code></pre></div>
+      <div><h3>C++</h3><pre><code>#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int trap(vector&lt;int&gt;&amp; height) {
+    int left = 0, right = (int)height.size() - 1;
+    int leftMax = 0, rightMax = 0, water = 0;
+
+    while (left &lt; right) {
+        if (height[left] &lt; height[right]) {
+            // left side is the bottleneck
+            leftMax = max(leftMax, height[left]);
+            water += leftMax - height[left];
+            left++;
+        } else {
+            // right side is the bottleneck
+            rightMax = max(rightMax, height[right]);
+            water += rightMax - height[right];
+            right--;
+        }
+    }
+    return water;
+}</code></pre></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Side-by-side comparison</h2>
+    <div class="scroll"><table class="compare">
+      <thead><tr><th scope="col">Point</th><th scope="col">Inclusive</th><th scope="col">Exclusive</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Range for leftMax[i]</th><td><code>0 … i</code></td><td><code>0 … i−1</code></td></tr>
+        <tr><th scope="row">Range for rightMax[i]</th><td><code>i … n−1</code></td><td><code>i+1 … n−1</code></td></tr>
+        <tr><th scope="row">Base cases</th><td><code>height[0]</code>, <code>height[n−1]</code></td><td><code>0</code>, <code>0</code></td></tr>
+        <tr><th scope="row">Formula</th><td><code>min(L, R) − h</code></td><td><code>max(0, min(L, R) − h)</code></td></tr>
+        <tr><th scope="row">Last index (i = 11, height 1)</th><td>min(3, <b>1</b>) − 1 = <b>0</b></td><td>min(3, <b>0</b>) − 1 = <b>−1</b> → clamped to 0</td></tr>
+        <tr><th scope="row">Can the raw value go negative?</th><td>No</td><td>Yes, at indices 1, 3, 7, 10, 11</td></tr>
+        <tr><th scope="row">Total water</th><td><b>6</b></td><td><b>6</b> (only with the clamp; without it 6 − 5 = 1)</td></tr>
+        <tr><th scope="row">Time / extra space</th><td>O(n) / O(n)</td><td>O(n) / O(n)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note"><b>Rule to remember:</b> if the arrays include the bar itself, use the plain formula. If they exclude it, wrap it in <b>max(0, …)</b>. Never mix inclusive arrays from one version with the formula of the other.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Code for both versions</h2>
+    <div class="tabs" role="tablist" aria-label="Language">
+      <button role="tab" data-lang="java" aria-selected="true">Java</button>
+      <button role="tab" data-lang="cpp" aria-selected="false">C++</button>
+    </div>
+    <div class="codegrid" id="code"></div>
+  </section>
+</div>
+
+<script>
+const H = [0,1,0,2,1,0,1,3,2,1,2,1];
+const n = H.length;
+
+function arrays(inclusive){
+  const L = new Array(n), R = new Array(n);
+  if (inclusive){
+    L[0] = H[0]; for (let i=1;i<n;i++) L[i] = Math.max(L[i-1], H[i]);
+    R[n-1] = H[n-1]; for (let i=n-2;i>=0;i--) R[i] = Math.max(R[i+1], H[i]);
+  } else {
+    L[0] = 0; for (let i=1;i<n;i++) L[i] = Math.max(L[i-1], H[i-1]);
+    R[n-1] = 0; for (let i=n-2;i>=0;i--) R[i] = Math.max(R[i+1], H[i+1]);
+  }
+  const raw = H.map((h,i)=>Math.min(L[i],R[i]) - h);
+  const water = raw.map(v=>Math.max(0,v));
+  return {L,R,raw,water};
+}
+
+function chart(d, inclusive){
+  // Bars and table share one column grid, so every value sits directly under its bar.
+  const colW=56, unit=52, labW=196, padT=24, maxH=3, base=padT+maxH*unit+10, rowH=34;
+  const rows=[
+    ['i', H.map((_,i)=>i), 'head'],
+    ['height', H, ''],
+    [inclusive?'leftMax (0…i)':'leftMax (0…i−1)', d.L, ''],
+    [inclusive?'rightMax (i…n−1)':'rightMax (i+1…n−1)', d.R, ''],
+    ['min(L,R) − height', d.raw, 'raw'],
+  ];
+  if(!inclusive) rows.push(['max(0, …)', d.water, 'water']);
+  const tTop=base+14, W=labW+n*colW+8, Hh=tTop+rows.length*rowH+44;
+  const total=d.water.reduce((a,b)=>a+b,0);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Bar diagram with the trace table aligned under each bar, ${inclusive?'inclusive':'exclusive'} version">`;
+  // y-axis labels
+  for(let k=0;k<=maxH;k++){ const y=base-k*unit; s+=`<text class="small" x="${labW-12}" y="${y+5}" text-anchor="end">${k}</text>`; }
+  s+=`<text class="lbl" x="8" y="${padT+10}">bar height</text>`;
+  // column guides from bars down through the table
+  for(let i=0;i<=n;i++){ const x=labW+i*colW; s+=`<line class="guide" x1="${x}" x2="${x}" y1="${padT}" y2="${tTop}"/>`; }
+  for(let i=0;i<n;i++){
+    const x=labW+i*colW+5, w=colW-10, lvl=Math.min(d.L[i],d.R[i]);
+    if(d.water[i]>0){ s+=`<rect class="water" x="${x}" y="${base-lvl*unit}" width="${w}" height="${d.water[i]*unit}"/>`; }
+    if(H[i]>0){ s+=`<rect class="bar" x="${x}" y="${base-H[i]*unit}" width="${w}" height="${H[i]*unit}"/>`; }
+    const ly=base-lvl*unit; s+=`<line class="level" x1="${x-3}" x2="${x+w+3}" y1="${ly}" y2="${ly}"/>`;
+    if(d.raw[i]<0){ const top=base-H[i]*unit; s+=`<line class="cross" x1="${x+4}" y1="${top+4}" x2="${x+w-4}" y2="${base-4}"/><line class="cross" x1="${x+w-4}" y1="${top+4}" x2="${x+4}" y2="${base-4}"/>`; }
+  }
+  s+=`<line class="ground" x1="${labW-4}" x2="${labW+n*colW+4}" y1="${base}" y2="${base}"/>`;
+  // table
+  rows.forEach(([label,arr,kind],r)=>{
+    const y=tTop+r*rowH;
+    s+=`<rect class="cell lab" x="0" y="${y}" width="${labW}" height="${rowH}"/><text class="lbl" x="10" y="${y+rowH/2+5}">${label}</text>`;
+    arr.forEach((v,i)=>{
+      const x=labW+i*colW;
+      let cc='cell', tc='';
+      if(kind==='head'){ cc+=' head'; tc='small'; }
+      if(kind==='raw'){ if(v<0){cc+=' neg'; tc='neg';} else if(v>0) tc='pos'; }
+      if(kind==='water' && v>0) tc='pos';
+      const shown = (kind==='raw' && v<0) ? '−'+(-v) : v;
+      s+=`<rect class="${cc}" x="${x}" y="${y}" width="${colW}" height="${rowH}"/><text class="${tc}" x="${x+colW/2}" y="${y+rowH/2+5}" text-anchor="middle">${shown}</text>`;
+    });
+  });
+  const ty=tTop+rows.length*rowH+30;
+  s+=`<text class="lbl" x="10" y="${ty}">Total water</text><text x="${labW+8}" y="${ty}">${d.water.filter(v=>v>0).join(' + ')} = ${total}</text>`;
+  return s+`</svg>`;
+}
+
+function panel(id, inclusive){
+  const d=arrays(inclusive);
+  const negIdx=d.raw.map((v,i)=>v<0?i:-1).filter(i=>i>=0);
+  document.getElementById(id).innerHTML = `
+    <div class="eyebrow">${inclusive?'Version 1':'Version 2'}</div>
+    <h2>${inclusive?'Inclusive: bar i counts itself':'Exclusive: bar i is left out'}</h2>
+    <div class="legend"><span><i class="lg-water"></i>trapped water</span><span><i class="lg-level"></i>water level = min(leftMax, rightMax)</span>${inclusive?'':'<span><i class="lg-neg"></i>negative raw value, clamped to 0 (crossed bar)</span>'}</div>
+    <div class="scroll">${chart(d,inclusive)}</div>
+    <p class="note">${inclusive
+      ? 'The dashed water level never drops below the top of a bar, because each bar is part of its own maximum. Where the level sits exactly on the bar top (for example i = 7 and i = 11), the water is 0.'
+      : `The dashed level drops <b>inside</b> the crossed bars at i = ${negIdx.join(', ')}: those bars are taller than everything on one side, so min(L, R) − height is −1. At i = 11 there is nothing on the right, so rightMax = 0 and the raw value is 0 − 1 = −1. The clamp max(0, …) fixes all of them.`}</p>`;
+}
+panel('inc', true); panel('exc', false);
+
+const CODE = {
+ java: [
+  ['Inclusive', `public int trap(int[] height) {
+    int n = height.length;
+    if (n == 0) return 0;
+
+    int[] leftMax = new int[n];
+    leftMax[0] = height[0];                 // bar 0 counts itself
+    for (int i = 1; i < n; i++)
+        leftMax[i] = Math.max(leftMax[i - 1], height[i]);
+
+    int[] rightMax = new int[n];
+    rightMax[n - 1] = height[n - 1];        // last bar counts itself
+    for (int i = n - 2; i >= 0; i--)
+        rightMax[i] = Math.max(rightMax[i + 1], height[i]);
+
+    int water = 0;
+    for (int i = 0; i < n; i++)
+        water += Math.min(leftMax[i], rightMax[i]) - height[i];
+    return water;
+}`],
+  ['Exclusive', `public int trap(int[] height) {
+    int n = height.length;
+    if (n == 0) return 0;
+
+    int[] leftMax = new int[n];
+    leftMax[0] = 0;                         // nothing to the left
+    for (int i = 1; i < n; i++)
+        leftMax[i] = Math.max(leftMax[i - 1], height[i - 1]);
+
+    int[] rightMax = new int[n];
+    rightMax[n - 1] = 0;                    // nothing to the right
+    for (int i = n - 2; i >= 0; i--)
+        rightMax[i] = Math.max(rightMax[i + 1], height[i + 1]);
+
+    int water = 0;
+    for (int i = 0; i < n; i++)
+        water += Math.max(0, Math.min(leftMax[i], rightMax[i]) - height[i]);
+    return water;
+}`]],
+ cpp: [
+  ['Inclusive', `#include <bits/stdc++.h>
+using namespace std;
+
+int trap(vector<int>& height) {
+    int n = height.size();
+    if (n == 0) return 0;
+
+    vector<int> leftMax(n), rightMax(n);
+    leftMax[0] = height[0];                 // bar 0 counts itself
+    for (int i = 1; i < n; i++)
+        leftMax[i] = max(leftMax[i - 1], height[i]);
+
+    rightMax[n - 1] = height[n - 1];        // last bar counts itself
+    for (int i = n - 2; i >= 0; i--)
+        rightMax[i] = max(rightMax[i + 1], height[i]);
+
+    int water = 0;
+    for (int i = 0; i < n; i++)
+        water += min(leftMax[i], rightMax[i]) - height[i];
+    return water;
+}`],
+  ['Exclusive', `#include <bits/stdc++.h>
+using namespace std;
+
+int trap(vector<int>& height) {
+    int n = height.size();
+    if (n == 0) return 0;
+
+    vector<int> leftMax(n), rightMax(n);
+    leftMax[0] = 0;                         // nothing to the left
+    for (int i = 1; i < n; i++)
+        leftMax[i] = max(leftMax[i - 1], height[i - 1]);
+
+    rightMax[n - 1] = 0;                    // nothing to the right
+    for (int i = n - 2; i >= 0; i--)
+        rightMax[i] = max(rightMax[i + 1], height[i + 1]);
+
+    int water = 0;
+    for (int i = 0; i < n; i++)
+        water += max(0, min(leftMax[i], rightMax[i]) - height[i]);
+    return water;
+}`]]
+};
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function showCode(lang){
+  document.getElementById('code').innerHTML = CODE[lang].map(([t,c])=>`<div><h3>${t}</h3><pre><code>${esc(c)}</code></pre></div>`).join('');
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.lang===lang)));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>showCode(b.dataset.lang)));
+showCode('java');
+
+function setSkin(s){
+  if(s==='auto') document.documentElement.removeAttribute('data-skin'); else document.documentElement.setAttribute('data-skin', s);
+  document.querySelectorAll('.themes button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.skin===s)));
+  try{ localStorage.setItem('rw-skin', s); }catch(e){}
+}
+document.querySelectorAll('.themes button').forEach(b=>b.addEventListener('click',()=>setSkin(b.dataset.skin)));
+let saved='auto'; try{ saved=localStorage.getItem('rw-skin')||'auto'; }catch(e){}
+setSkin(saved);
+
+// ---------- Two pointers ----------
+const DPI = arrays(true);   // inclusive DP arrays, used for comparison
+const TP=(function(){
+  let l=0,r=n-1,lm=0,rm=0,w=0; const steps=[{l,r,lm,rm,w,i:null}];
+  while(l<r){
+    let side,i,add,park,cmp;
+    if(H[l]<H[r]){ side='L'; i=l; park=r; cmp=`${H[l]} < ${H[r]}`; lm=Math.max(lm,H[l]); add=lm-H[l]; l++; }
+    else { side='R'; i=r; park=l; cmp=`${H[l]} ≥ ${H[r]}`; rm=Math.max(rm,H[r]); add=rm-H[r]; r--; }
+    w+=add; steps.push({l,r,lm,rm,w,i,side,add,cmp,park});
+  }
+  return steps;
+})();
+let tpPrevK=null;
+function tpRender(k){
+  const st=TP[k], prev=tpPrevK===null?null:TP[tpPrevK], forward = tpPrevK!==null && k===tpPrevK+1;
+  const colW=56, unit=52, labW=206, padT=44, maxH=3, base=padT+maxH*unit+10, rowH=34;
+  const done={}; for(let j=1;j<=k;j++) done[TP[j].i]=TP[j];
+  const rows=['i','height','DP leftMax','DP rightMax','step (2 pointers)','side (2 pointers)','water (2 pointers)'];
+  const tTop=base+14, W=labW+n*colW+8, Hh=tTop+rows.length*rowH+12;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Two pointer state after step ${k}, with the DP arrays underneath">`;
+  for(let q=0;q<=maxH;q++){ const y=base-q*unit; s+=`<text class="small" x="${labW-12}" y="${y+5}" text-anchor="end">${q}</text>`; }
+  for(let i=0;i<=n;i++){ const x=labW+i*colW; s+=`<line class="guide" x1="${x}" x2="${x}" y1="${padT}" y2="${tTop}"/>`; }
+  for(let i=0;i<n;i++){
+    const x=labW+i*colW+5, wd=colW-10, d=done[i];
+    if(d && d.add>0){ s+=`<rect class="water${(st.i===i&&forward)?' new':''}" x="${x}" y="${base-(H[i]+d.add)*unit}" width="${wd}" height="${d.add*unit}"/>`; }
+    if(H[i]>0) s+=`<rect class="bar${st.i===i?' cur':''}" x="${x}" y="${base-H[i]*unit}" width="${wd}" height="${H[i]*unit}"/>`;
+    else if(st.i===i) s+=`<line class="ptrline ${st.side==='L'?'l':'r'}" x1="${x}" x2="${x+wd}" y1="${base-3}" y2="${base-3}"/>`;
+  }
+  s+=`<line class="ground" x1="${labW-4}" x2="${labW+n*colW+4}" y1="${base}" y2="${base}"/>`;
+  const px=i=>labW+i*colW+colW/2;
+  const mvL = prev && prev.l!==st.l, mvR = prev && prev.r!==st.r;
+  if(st.l===st.r){ s+=`<text class="ptrL moved" x="${px(st.l)}" y="${padT-22}" text-anchor="middle">L = R ▼</text>`; }
+  else { s+=`<text class="ptrL${mvL?' moved':''}" x="${px(st.l)}" y="${padT-22}" text-anchor="middle">L ▼</text><text class="ptrR${mvR?' moved':''}" x="${px(st.r)}" y="${padT-22}" text-anchor="middle">R ▼</text>`; }
+  s+=`<text class="lbl" x="8" y="${padT-22}">pointers</text>`;
+  rows.forEach((label,r)=>{
+    const y=tTop+r*rowH;
+    s+=`<rect class="cell lab" x="0" y="${y}" width="${labW}" height="${rowH}"/><text class="lbl" x="10" y="${y+rowH/2+5}">${label}</text>`;
+    for(let i=0;i<n;i++){
+      const x=labW+i*colW, d=done[i]; let v='', tc='', cc='cell';
+      if(r===0){ v=i; cc+=' head'; tc='small'; }
+      else if(r===1) v=H[i];
+      else if(r===2 || r===3){ v = r===2 ? DPI.L[i] : DPI.R[i];
+        if(d && ((r===2&&d.side==='L')||(r===3&&d.side==='R'))){ cc+=' used'+(st.i===i&&forward?' new':''); tc='pos'; } }
+      else if(d){ const sn=TP.indexOf(d);
+        if(r===4) v=sn; if(r===5){ v=d.side; tc=d.side==='L'?'ptrL':'ptrR'; }
+        if(r===6){ v=d.add; if(d.add>0) tc='pos'; } }
+      else if(r>=4 && k===TP.length-1 && i===st.l) v='—';
+      if(st.i===i && r>0 && !cc.includes('used')) cc+=' head';
+      s+=`<rect class="${cc}" x="${x}" y="${y}" width="${colW}" height="${rowH}"/><text class="${tc}" x="${x+colW/2}" y="${y+rowH/2+5}" text-anchor="middle">${v}</text>`;
+    }
+  });
+  document.getElementById('tpChart').innerHTML=s+`</svg>`;
+  document.getElementById('tpLabel').textContent = k===0 ? 'Start: L = 0, R = 11, leftMax = 0, rightMax = 0, water = 0' : `Step ${k} of ${TP.length-1} · total water = ${st.w}`;
+
+  // DP vs two-pointer knowledge cards
+  const know=document.getElementById('tpKnow'); let kh;
+  if(k===0){
+    kh=`<div><h4>DP</h4><div class="kv">Builds leftMax[] and rightMax[] for all 12 bars before counting any water.</div><div class="kv">Extra space: 2 arrays of size n.</div></div>
+        <div><h4>Two pointers</h4><div class="kv">L = 0, R = 11, leftMax = 0, rightMax = 0.</div><div class="kv">Extra space: 4 variables. Processes one bar per step from the shorter side.</div></div>
+        <div class="verdict">Press <b>Play</b> or <b>Next</b>. At every step, compare what DP knows with what the two pointers know, and see that both give the same water.</div>`;
+  } else {
+    const i=st.i, Lsd=st.side==='L', a=DPI.L[i], b=DPI.R[i], m=Math.min(a,b), mx=Lsd?st.lm:st.rm;
+    const minSide = a<b?'left':(b<a?'right':'both equal');
+    const own = Lsd?'leftMax':'rightMax', other = Lsd?'rightMax':'leftMax';
+    const seen = Lsd?`bars 0…${i} all scanned`:`bars ${i}…11 all scanned`;
+    kh=`<div><h4>DP (both arrays)</h4>
+          <div class="kv">leftMax[${i}] = ${a}</div>
+          <div class="kv">rightMax[${i}] = ${b}</div>
+          <div class="kv">min(${a}, ${b}) = ${m} → limited by the <b>${minSide}</b> side</div>
+          <div class="kv">water = ${m} − ${H[i]} = <b>${m-H[i]}</b></div></div>
+        <div><h4>Two pointers (one exact max)</h4>
+          <div class="kv">check: height[L] vs height[R] → ${st.cmp} → process the <b>${Lsd?'left':'right'}</b> bar ${i}</div>
+          <div class="kv exact">${own} = max(…, ${H[i]}) = ${mx} ✓ exact (${seen})</div>
+          <div class="kv unknown">${other}: not known yet, but the parked ${Lsd?'R':'L'} bar (index ${st.park}) is ${H[st.park]} tall, so true ${other} ≥ ${H[st.park]} ≥ ${mx}</div>
+          <div class="kv">min = ${own} = ${mx}, water = ${mx} − ${H[i]} = <b>${st.add}</b></div></div>
+        <div class="verdict">Same answer as DP: <b>${st.add}</b> unit${st.add===1?'':'s'} at index ${i}. The check picked the ${Lsd?'leftMax':'rightMax'} column, which is the DP minimum here. Running total = <b>${st.w}</b>.${k===TP.length-1?` L and R now meet at index ${st.l}, the tallest bar (height ${H[st.l]}), which holds no water, so the loop stops. Final answer = <b>${st.w}</b>.`:''}</div>`;
+  }
+  know.innerHTML=kh; know.classList.remove('anim'); void know.offsetWidth; know.classList.add('anim');
+
+  let why;
+  if(k===0) why='<b>Start.</b> Both pointers sit at the ends. The DP rows are already full because DP computes everything first. The two-pointer rows fill in one bar per step.';
+  else why=`<b>Step ${k}.</b> ${st.side==='L'?'L moves right':'R moves left'}. Look at the green outlined DP cell under bar ${st.i}: that is the DP value the two pointers effectively used, without ever building the array.`;
+  document.getElementById('tpWhy').innerHTML=why;
+
+  let t='<thead><tr><th scope="col">Step</th><th scope="col">Compare</th><th scope="col">Moves</th><th scope="col">Bar i (height)</th><th scope="col">leftMax</th><th scope="col">rightMax</th><th scope="col">Water added</th><th scope="col">Total</th></tr></thead><tbody>';
+  for(let j=1;j<TP.length;j++){ const d=TP[j];
+    t+=`<tr class="${j===k?'cur':''}"><td>${j}</td><td>${d.cmp}</td><td>${d.side==='L'?'left':'right'}</td><td>${d.i} (${H[d.i]})</td><td>${d.lm}</td><td>${d.rm}</td><td class="${d.add>0?'pos':''}">${d.add}</td><td>${d.w}</td></tr>`; }
+  document.getElementById('tpTable').innerHTML=t+'</tbody>';
+  document.querySelectorAll('#tpChips button').forEach(b=>{ if(+b.dataset.k===k) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current'); });
+  document.getElementById('tpPrev').disabled = k===0;
+  document.getElementById('tpNext').disabled = k===TP.length-1;
+  tpPrevK=k;
+}
+// proof table: DP minimum vs side chosen
+(function(){
+  const chosen={}; TP.forEach(d=>{ if(d.i!==null) chosen[d.i]=d.side; });
+  let t='<thead><tr><th scope="col">i</th><th scope="col">height</th><th scope="col">DP leftMax</th><th scope="col">DP rightMax</th><th scope="col">DP min is…</th><th scope="col">Two pointers chose</th><th scope="col">Match</th><th scope="col">Water</th></tr></thead><tbody>';
+  for(let i=0;i<n;i++){ const a=DPI.L[i], b=DPI.R[i], ms=a<b?'left':(b<a?'right':'equal'), c=chosen[i];
+    const ok = !c ? '—' : ((ms==='equal')||(ms==='left'&&c==='L')||(ms==='right'&&c==='R')) ? '✓' : '✗';
+    t+=`<tr><td>${i}</td><td>${H[i]}</td><td class="${c==='L'?'pos':''}">${a}</td><td class="${c==='R'?'pos':''}">${b}</td><td>${ms}</td><td>${c?(c==='L'?'L (leftMax)':'R (rightMax)'):'meeting point'}</td><td class="pos">${ok}</td><td>${DPI.water[i]}</td></tr>`; }
+  document.getElementById('tpProof').innerHTML=t+'</tbody>';
+})();
+let tpK=0, tpTimer=null;
+const playBtn=document.getElementById('tpPlay');
+function stopPlay(){ if(tpTimer){ clearInterval(tpTimer); tpTimer=null; } playBtn.textContent='▶ Play'; }
+function go(k){ tpK=k; tpRender(tpK); }
+document.getElementById('tpChips').innerHTML = TP.map((_,j)=>`<button data-k="${j}" aria-label="${j===0?'Start':'Step '+j}">${j===0?'Start':j}</button>`).join('');
+document.querySelectorAll('#tpChips button').forEach(b=>b.addEventListener('click',()=>{ stopPlay(); go(+b.dataset.k); }));
+document.getElementById('tpPrev').addEventListener('click',()=>{ stopPlay(); go(Math.max(0,tpK-1)); });
+document.getElementById('tpNext').addEventListener('click',()=>{ stopPlay(); go(Math.min(TP.length-1,tpK+1)); });
+playBtn.addEventListener('click',()=>{
+  if(tpTimer){ stopPlay(); return; }
+  if(tpK===TP.length-1) go(0);
+  playBtn.textContent='❚❚ Pause';
+  tpTimer=setInterval(()=>{ if(tpK>=TP.length-1){ stopPlay(); return; } go(tpK+1); }, 2600);
+});
+go(TP.length-1);
+</script>
+
+</body>
+</html>

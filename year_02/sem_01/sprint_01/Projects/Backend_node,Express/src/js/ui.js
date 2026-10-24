@@ -171,16 +171,29 @@ export function escapeHtml(str) {
 }
 
 export function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  if (!name) return '??';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '??';
+  return parts.map(n => n[0]).join('').substring(0, 2).toUpperCase();
 }
 
 export function bookCover(book, size = 'normal') {
   const w = size === 'large' ? '180' : '80';
   const h = size === 'large' ? '270' : '120';
+  if (!book) {
+    return `
+      <div class="book-cover ${size}" style="background:#4a5568;color:#fff;width:${w}px;height:${h}px;">
+        <div class="book-cover-inner">
+          <div class="book-cover-title" style="font-size:12px;">Unavailable</div>
+        </div>
+        <div class="book-cover-spine"></div>
+      </div>
+    `;
+  }
   const fs = size === 'large' ? '16' : '11';
   const titleSize = size === 'large' ? '14' : '10';
   return `
-    <div class="book-cover ${size}" style="background:${book.coverColor};color:${book.coverTextColor};width:${w}px;height:${h}px;">
+    <div class="book-cover ${size}" style="background:${book.coverColor || '#1a365d'};color:${book.coverTextColor || '#fff'};width:${w}px;height:${h}px;">
       <div class="book-cover-inner">
         <div class="book-cover-title" style="font-size:${titleSize}px;">${escapeHtml(book.title)}</div>
         <div class="book-cover-author" style="font-size:${fs}px;">${escapeHtml(book.author)}</div>
@@ -191,6 +204,7 @@ export function bookCover(book, size = 'normal') {
 }
 
 export function availabilityBadge(book) {
+  if (!book) return '<span class="badge">Unavailable</span>';
   if (book.availableCopies === 0) {
     return '<span class="badge badge-danger">Checked Out</span>';
   } else if (book.availableCopies < book.totalCopies / 2) {

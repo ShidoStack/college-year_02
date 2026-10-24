@@ -62,10 +62,11 @@ let currentView = 'catalog';
 let currentNavItem = 'library';
 
 const app = {
-  init() {
+  async init() {
     auth.init();
     if (!auth.requireAuth()) return;
     initializeSocket();
+    await store.initFromBackend();
     this.buildSidebar();
     this.buildTopbar();
     this.bindEvents();

@@ -75,8 +75,8 @@ export const circulationView = {
               const status = days > 0 ? 'overdue' : b.status;
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                  ${isLibrarian ? `<td>${escapeHtml(member.name)}</td>` : ''}
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                  ${isLibrarian ? `<td>${escapeHtml(member ? member.name : 'Unknown')}</td>` : ''}
                   <td>${formatDate(b.issueDate)}</td>
                   <td>${formatDate(b.dueDate)}</td>
                   <td>${statusBadge(status)}</td>
@@ -178,11 +178,11 @@ export const circulationView = {
               const member = store.getMember(r.memberId);
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                  ${isLibrarian ? `<td>${escapeHtml(member.name)}</td>` : ''}
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                  ${isLibrarian ? `<td>${escapeHtml(member ? member.name : 'Unknown')}</td>` : ''}
                   <td>${formatDate(r.reservedOn)}</td>
                   <td>${statusBadge(r.status)}</td>
-                  <td>${book.availableCopies > 0 ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+                  <td>${book ? (book.availableCopies > 0 ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>') : '<span class="badge badge-danger">Unavailable</span>'}</td>
                   <td><button class="btn btn-xs btn-danger" data-cancel-res="${r.id}">Cancel</button></td>
                 </tr>
               `;
@@ -241,8 +241,8 @@ export const circulationView = {
               const member = store.getMember(b.memberId);
               return `
                 <tr>
-                  <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                  ${isLibrarian ? `<td>${escapeHtml(member.name)}</td>` : ''}
+                  <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                  ${isLibrarian ? `<td>${escapeHtml(member ? member.name : 'Unknown')}</td>` : ''}
                   <td>${formatDate(b.issueDate)}</td>
                   <td>${formatDate(b.dueDate)}</td>
                   <td>${formatDate(b.returnDate)}</td>

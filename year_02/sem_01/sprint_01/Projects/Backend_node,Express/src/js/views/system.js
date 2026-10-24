@@ -157,8 +157,8 @@ export const systemView = {
                     const fine = days > 0 ? days * 5 : 0;
                     return `
                       <tr>
-                        <td><span style="font-weight:500;">${escapeHtml(book.title)}</span></td>
-                        <td>${escapeHtml(member.name)}</td>
+                        <td><span style="font-weight:500;">${escapeHtml(book ? book.title : 'Deleted Book')}</span></td>
+                        <td>${escapeHtml(member ? member.name : 'Unknown')}</td>
                         <td>${formatDate(b.dueDate)}</td>
                         <td><span class="text-danger">${days}</span></td>
                         <td><span class="fine-amount">$${fine}</span></td>
